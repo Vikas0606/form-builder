@@ -1,0 +1,68 @@
+<div class="form-submission-wrapper">
+    <mat-card class="form-sidebar">
+      <mat-card-title>Select a Form</mat-card-title>
+      <mat-divider class="my-2"></mat-divider>
+      <div *ngFor="let template of templates">
+        <button mat-stroked-button class="w-100 mb-2 text-start" (click)="loadForm(template)">
+          {{ template.name }}
+        </button>
+      </div>
+    </mat-card>
+  
+    <div class="form-preview">
+      <h3 *ngIf="selectedForm">Fill the Form: {{ selectedForm.name }}</h3>
+      <form *ngIf="selectedForm" [formGroup]="form" (ngSubmit)="onSubmit()" class="row g-3 drop-zone">
+        <div class="col-md-6 col-12" *ngFor="let field of selectedForm.fields">
+          <mat-form-field class="w-100" appearance="outline" *ngIf="field.type !== 'radio' && field.type !== 'checkbox'">
+            <mat-label>{{ field.label }}</mat-label>
+            <ng-container [ngSwitch]="field.type">
+              <textarea *ngSwitchCase="'textarea'" matInput [formControlName]="field.id.toString()" [placeholder]="field.placeholder || ''"></textarea>
+              <input *ngSwitchCase="'date'" matInput type="date" [formControlName]="field.id.toString()">
+              <mat-select *ngSwitchCase="'select'" [formControlName]="field.id.toString()">
+                <mat-option *ngFor="let opt of field.options || []" [value]="opt">{{ opt }}</mat-option>
+              </mat-select>
+              <input *ngSwitchDefault matInput [type]="field.type" [formControlName]="field.id.toString()" [placeholder]="field.placeholder || ''">
+            </ng-container>
+            <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+            <mat-error *ngIf="form.get(field.id.toString())?.invalid && form.get(field.id.toString())?.touched">
+              This field is required
+            </mat-error>
+          </mat-form-field>
+  
+          <div *ngIf="field.type === 'checkbox' || field.type === 'radio'" class="w-100">
+            <label class="fw-bold">{{ field.label }}</label>
+            
+            <ng-container *ngIf="field.type === 'checkbox'">
+              <mat-checkbox
+                *ngFor="let opt of field.options"
+                class="d-block"
+                [checked]="isChecked(field, opt)"
+                (change)="onCheckboxChange(field, opt, $event)">
+                {{ opt }}
+              </mat-checkbox>
+            </ng-container>
+            
+            <ng-container *ngIf="field.type === 'radio'">
+              <mat-radio-group [formControlName]="field.id.toString()">
+                <mat-radio-button *ngFor="let opt of field.options" [value]="opt" class="me-3">
+                  {{ opt }}
+                </mat-radio-button>
+              </mat-radio-group>
+            </ng-container>
+            
+            <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+            <mat-error *ngIf="form.get(field.id.toString())?.invalid && form.get(field.id.toString())?.touched">
+              This field is required
+            </mat-error>
+          </div>
+        </div>
+  
+        <div class="col-12 text-end mt-3">
+          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
+            Submit Form
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  

@@ -1,0 +1,19 @@
+{
+    "users": [
+      {
+        "id": 1,
+        "email": "admin@deltaCapital.com",
+        "password": "admin123",
+        "role": "admin"
+      },
+      {
+        "id": 2,
+        "email": "user@deltaCapital.com",
+        "password": "user123",
+        "role": "user"
+      }
+    ],
+    "formTemplates": [],
+    "submissions": []
+  }
+  

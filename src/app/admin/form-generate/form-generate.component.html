@@ -1,0 +1,161 @@
+<div class="form-builder-wrapper">
+  <!-- Left Panel -->
+  <mat-card class="form-elements-card">
+    <mat-card-title>Form Elements</mat-card-title>
+    <mat-accordion>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>Inputs</mat-panel-title>
+        </mat-expansion-panel-header>
+        @for (item of inputFields; track $index) {
+          <div>
+            <button
+              mat-flat-button
+              color="primary"
+              class="w-100 mb-2"
+              type="button"
+              (click)="onInputFieldClick(item.type)">
+              {{ item.label }}
+            </button>
+          </div>
+        }
+      </mat-expansion-panel>
+    </mat-accordion>
+
+    <mat-divider class="my-3"></mat-divider>
+    <mat-card-subtitle class="fw-bold">Saved Forms</mat-card-subtitle>
+    <div *ngFor="let template of templates$ | async" class="saved-template-item">
+      <button mat-stroked-button class="w-100 mb-2 text-start" (click)="loadTemplate(template)">
+        {{ template.name }}
+      </button>
+    </div>
+    <button mat-flat-button color="primary" class="w-100 mb-2 text-start" (click)="logout()">
+      logout
+    </button>
+  </mat-card>
+
+  <div class="form-canvas" (drop)="onDrop($event)" (dragover)="allowDrop($event)">
+    <h3>Form Preview</h3>
+    <form class="drop-zone row">
+      @for (field of previewFields; track field.id) {
+        <div class="col-md-6 col-12 position-relative">
+          <div class="text-end mb-1">
+            <button mat-icon-button type="button" (click)="deleteField(field.id)">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="toggleConfig(field.id)">
+              <mat-icon>settings</mat-icon>
+            </button>
+          </div>
+
+          <div class="floating-config-box" *ngIf="editingFieldId === field.id" (click)="$event.stopPropagation()">
+            <mat-form-field class="w-100 mb-2">
+              <mat-label>Label</mat-label>
+              <input matInput [value]="field.label || ''" (input)="onInputChange($event, field.id, 'label')" class="config_input"/>
+            </mat-form-field>
+
+            <mat-form-field class="w-100 mb-2">
+              <mat-label>Placeholder</mat-label>
+              <input matInput [value]="field.placeholder || ''" (input)="onInputChange($event, field.id, 'placeholder')" class="config_input"/>
+            </mat-form-field>
+
+            <mat-form-field class="w-100 mb-2">
+              <mat-label>Help Text</mat-label>
+              <input matInput [value]="field.helpText || ''" (input)="onInputChange($event, field.id, 'helpText')"  />
+            </mat-form-field>
+
+            <mat-checkbox [checked]="field.required || false" (change)="updateField(field.id, 'required', $event.checked)">
+              Required
+            </mat-checkbox>
+
+            <div *ngIf="field.type === 'select' || field.type === 'radio' || field.type === 'checkbox'" class="mt-3">
+              <h6 class="mb-2">Options</h6>
+
+              <div class="d-flex gap-2 align-items-center mb-2">
+                <input
+                  matInput
+                  placeholder="Add new option"
+                  [value]="newOptionMap[field.id] || ''"
+                  (input)="onNewOptionInput($event, field.id)"
+                  (keydown.enter)="addOption(field.id)" />
+                <button mat-icon-button color="primary" type="button" (click)="addOption(field.id)">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+
+              <div *ngFor="let option of field.options; let i = index" class="d-flex align-items-center mb-2 gap-2">
+                <input
+                  matInput
+                  [value]="option"
+                  (input)="onOptionEdit($event, field.id, i)" />
+                <button mat-icon-button color="warn" type="button" (click)="removeOption(field.id, i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="text-end mt-2">
+              <button mat-stroked-button color="warn" (click)="closeConfig()">Close</button>
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100" *ngIf="field.type !== 'radio' && field.type !== 'checkbox'">
+            <mat-label>{{ field.label }}</mat-label>
+            @switch (field.type) {
+              @case ('textarea') {
+                <textarea matInput [placeholder]="field.placeholder || ''"></textarea>
+              }
+              @case ('date') {
+                <input matInput type="date" />
+              }
+              @case ('select') {
+                <mat-select>
+                  <mat-option *ngFor="let option of field.options || []" [value]="option">{{ option }}</mat-option>
+                </mat-select>
+              }
+              @default {
+                <input matInput [type]="field.type" [placeholder]="field.placeholder || ''" />
+              }
+            }
+            <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+          </mat-form-field>
+
+          <div *ngIf="field.type === 'radio' || field.type === 'checkbox'" class="w-100 mt-2">
+            <label class="fw-medium mb-1 d-block">{{ field.label }}</label>
+
+            <div *ngIf="field.type === 'radio'">
+              <mat-radio-group>
+                <mat-radio-button *ngFor="let option of field.options || []" [value]="option" class="me-3">
+                  {{ option }}
+                </mat-radio-button>
+              </mat-radio-group>
+            </div>
+
+            <div *ngIf="field.type === 'checkbox'">
+              <mat-checkbox *ngFor="let option of field.options || []" class="d-block">
+                {{ option }}
+              </mat-checkbox>
+            </div>
+
+            <mat-hint *ngIf="field.helpText">{{ field.helpText }}</mat-hint>
+          </div>
+        </div>
+      }
+      <div class="text-end mb-3">
+        <button mat-raised-button color="primary" (click)="promptAndSaveTemplate()">Save Form Template</button>
+      </div>      
+    </form>
+
+    <div class="input-template-panel" *ngIf="inputTemplates.length > 0">
+      <h4>Select an input to drag</h4>
+      <div class="input-template-list">
+        @for (input of inputTemplates; track $index) {
+          <div class="template-card" draggable="true" (dragstart)="onDragStart($event, input)">
+            <strong>{{ input.label }}</strong><br />
+            <small>{{ input.placeholder }}</small>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
